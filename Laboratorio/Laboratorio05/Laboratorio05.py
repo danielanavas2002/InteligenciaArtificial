@@ -6,12 +6,20 @@
 # Librerias 
 # ----------------------------------------------------------------------
 from PIL import Image
+import matplotlib.pyplot as plt
 import numpy as np
 import os
-import matplotlib.pyplot as plt
+from tkinter import Tk
+from tkinter.filedialog import askopenfilename
 
 # ======================================================================
+#
 # Task 1 - Graph-Search
+#
+# ======================================================================
+
+# ======================================================================
+# Task 1.1 - Discretización de la imagen
 # ======================================================================
 
 # ----------------------------------------------------------------------
@@ -80,8 +88,19 @@ def imagen_a_matriz(ruta_imagen, factor_escala, tolerancia):
     return matriz # Devuelve la matriz resultante
 
 # Para evitar errores se obtiene la ruta del directorio donde está guardado el script
-directorio_actual = os.path.dirname(os.path.abspath(__file__))
-ruta_imagen = os.path.join(directorio_actual, "PruebaLab1.bmp") # Concatenar con la ruta de la imagen
+# directorio_actual = os.path.dirname(os.path.abspath(__file__))
+# ruta_imagen = os.path.join(directorio_actual, "PruebaLab1.bmp") # Concatenar con la ruta de la imagen
+
+# ABRIR IMAGEN DESDE EL EXPLORADOR DE ARCHIVOS 
+
+Tk().withdraw() # Evitar que se abra una ventana vacía de tkinter
+ruta_imagen = askopenfilename(title="Seleccionar imagen", filetypes=[("Archivos de imagen", "*.bmp;*.png")]) # Abrir el cuadro de diálogo para seleccionar la imagen
+
+# Si se selecciona una imagen, se guarda la ruta
+if ruta_imagen:
+    print(f"Ruta de la imagen seleccionada: {ruta_imagen}")
+else:
+    print("No se seleccionó ninguna imagen.")
 
 # Convertir la imagen en matriz
 escala = 10       # Definir escala
@@ -99,3 +118,7 @@ plt.imshow(matriz_lab, cmap="nipy_spectral")
 plt.colorbar()
 plt.title("Matriz del Laberinto")
 plt.show()
+
+# ======================================================================
+# Task 1.2 - Framework de Problemas
+# ======================================================================
