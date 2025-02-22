@@ -3,78 +3,99 @@
 # Inteligencia Artificial - Ciclo 1 | 2025
 
 # ----------------------------------------------------------------------
-# Task 1 - Graph-Search
+# Librerias 
 # ----------------------------------------------------------------------
-
-import cv2
+from PIL import Image
 import numpy as np
+import os
+import matplotlib.pyplot as plt
 
-def imagen_a_matriz(ruta_imagen, grid_size=20):
+# ======================================================================
+# Task 1 - Graph-Search
+# ======================================================================
+
+# ----------------------------------------------------------------------
+# FUNCIÓN PARA DEFINIR COLOR
+# Los colores en la imagen (especialmente aquellos que no son blanco 
+# y negro) no siempre son del código RGB exacto, por ello se define una
+# rango aceptable.
+# ----------------------------------------------------------------------
+def def_color(r, g, b, color, tolerancia):
     """
-    - 0: Pared (negro)
-    - 1: Camino libre (blanco)
-    - 2: Meta (verde)
-    - 3: Punto de inicio (rojo)
+    Param:
+        r (int): Componente rojo del color.
+        g (int): Componente verde del color.
+        b (int): Componente azul del color.
+        color (tuple): Tupla que contiene el color de referencia (r_ref, g_ref, b_ref).
+        tolerancia (int): Valor que define el rango de tolerancia para la comparación.
+
+    Return:
+        bool: True si el color está dentro del rango de tolerancia, False en caso contrario.
     """
-    # Cargar la imagen
-    imagen = cv2.imread(ruta_imagen)
+    r_ref, g_ref, b_ref = color # Verifica si un color está dentro de la tolerancia de otro
+    return (abs(r - r_ref) <= tolerancia and
+            abs(g - g_ref) <= tolerancia and
+            abs(b - b_ref) <= tolerancia)
 
-    # Convertir a espacio de color HSV para detección de colores
-    hsv = cv2.cvtColor(imagen, cv2.COLOR_BGR2HSV)
+# ----------------------------------------------------------------------
+# IMAGEN A MATRIZ
+# Procesa una imagen, reduce su tamaño y convierte cada píxel en un 
+# valor correspondiente a su color en la matriz:
+# - Blanco -> 0 (Camino libre)
+# - Negro -> 1 (Pared)
+# - Verde -> 2 (Meta)
+# - Rojo -> 3 (Inicio)
+# ----------------------------------------------------------------------
+def imagen_a_matriz(ruta_imagen, factor_escala, tolerancia):
+    """
+    Param:
+        ruta_imagen (str): Ruta del archivo de imagen a procesar.
+        factor_escala (int): Factor de escala para redimensionar la imagen.
+        tolerancia (int): Tolerancia para la comparación de colores.
 
-    # Definir rangos de colores en HSV
-    colores = {
-        "blanco": ([0, 0, 200], [180, 30, 255]),  # Caminos libres
-        "negro": ([0, 0, 0], [180, 255, 30]),  # Paredes
-        "rojo1": ([0, 120, 70], [10, 255, 255]),  # Rojo (inicio)
-        "rojo2": ([170, 120, 70], [180, 255, 255]),
-        "verde": ([40, 40, 40], [80, 255, 255])  # Metas
-    }
+    Return:
+        numpy.ndarray: Matriz con valores enteros que representan los colores procesados de la imagen.
+    """
+    img = Image.open(ruta_imagen).convert("RGB")                       # Carga la imagen y la convierte a formato RGB
+    ancho, alto = img.size                                             # Obtiene las dimensiones originales de la imagen
+    img = img.resize((ancho // factor_escala, alto // factor_escala))  # Redimensiona la imagen según el factor de escala
+    pixeles = np.array(img)                                            # Convierte la imagen en un array de píxeles RGB
+    matriz = np.zeros((pixeles.shape[0], pixeles.shape[1]), dtype=int) # Inicializa una matriz de ceros del mismo tamaño
 
-    # Obtener dimensiones y tamaño de cada celda
-    alto, ancho, _ = imagen.shape
-    celda_alto = alto // grid_size
-    celda_ancho = ancho // grid_size
+    # Recorre cada píxel de la imagen y asigna un valor a la matriz dependiendo del color
+    for i in range(pixeles.shape[0]):
+        for j in range(pixeles.shape[1]):
+            r, g, b = pixeles[i, j] # Obtiene los valores RGB de cada píxel
 
-    # Inicializar matriz del laberinto
-    matriz = np.zeros((grid_size, grid_size), dtype=int)
+            # Compara el color de cada píxel con los colores definidos
+            if def_color(r, g, b, (255, 255, 255), tolerancia):  # Blanco
+                matriz[i, j] = 0                                 # Camino libre
+            elif def_color(r, g, b, (0, 0, 0), tolerancia):  # Negro
+                matriz[i, j] = 1                             # Pared
+            elif def_color(r, g, b, (0, 255, 0), tolerancia):  # Verde
+                matriz[i, j] = 2                               # Meta
+            elif def_color(r, g, b, (255, 0, 0), tolerancia):  # Rojo
+                matriz[i, j] = 3                               # Inicio
 
-    for i in range(grid_size):
-        for j in range(grid_size):
-            # Obtener la región de la celda
-            y_ini, y_fin = i * celda_alto, (i + 1) * celda_alto
-            x_ini, x_fin = j * celda_ancho, (j + 1) * celda_ancho
-            celda = hsv[y_ini:y_fin, x_ini:x_fin]
+    return matriz # Devuelve la matriz resultante
 
-            # Contar píxeles de cada color en la celda
-            contadores = {
-                "blanco": np.sum(cv2.inRange(celda, np.array(colores["blanco"][0]), np.array(colores["blanco"][1]))),
-                "negro": np.sum(cv2.inRange(celda, np.array(colores["negro"][0]), np.array(colores["negro"][1]))),
-                "rojo": np.sum(cv2.inRange(celda, np.array(colores["rojo1"][0]), np.array(colores["rojo1"][1]))) +
-                        np.sum(cv2.inRange(celda, np.array(colores["rojo2"][0]), np.array(colores["rojo2"][1]))),
-                "verde": np.sum(cv2.inRange(celda, np.array(colores["verde"][0]), np.array(colores["verde"][1]))),
-            }
+# Para evitar errores se obtiene la ruta del directorio donde está guardado el script
+directorio_actual = os.path.dirname(os.path.abspath(__file__))
+ruta_imagen = os.path.join(directorio_actual, "PruebaLab1.bmp") # Concatenar con la ruta de la imagen
 
-            # Determinar el color dominante
-            color_dominante = max(contadores, key=contadores.get)
+# Convertir la imagen en matriz
+escala = 10       # Definir escala
+tolerancia = 30   # Definir tolerancia
+matriz_lab = imagen_a_matriz(ruta_imagen, escala, tolerancia)
 
-            # Asignar el valor en la matriz
-            if color_dominante == "negro":
-                matriz[i, j] = 0  # Pared
-            elif color_dominante == "blanco":
-                matriz[i, j] = 1  # Camino libre
-            elif color_dominante == "rojo":
-                matriz[i, j] = 3  # Punto de inicio
-            elif color_dominante == "verde":
-                matriz[i, j] = 2  # Meta
+# Configurar para imprimir toda la matriz
+np.set_printoptions(threshold=np.inf)
 
-    return matriz
+# Mostrar la matriz
+print(matriz_lab)
 
-# Ruta de la imagen
-ruta_imagen = "PruebaLab1.bmp"  
-
-# Convertir la imagen a matriz
-matriz_laberinto = imagen_a_matriz(ruta_imagen)
-
-# Mostrar la matriz resultante
-print(matriz_laberinto)
+# Visualizar la matriz con colores
+plt.imshow(matriz_lab, cmap="nipy_spectral")
+plt.colorbar()
+plt.title("Matriz del Laberinto")
+plt.show()
