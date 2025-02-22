@@ -12,6 +12,8 @@ import os
 from tkinter import Tk
 from tkinter.filedialog import askopenfilename
 from abc import ABC, abstractmethod
+from collections import deque
+import heapq
 
 # ======================================================================
 #
@@ -209,7 +211,6 @@ class Laberinto(Problema):
         x_meta, y_meta = self.meta
         return abs(x - x_meta) + abs(y - y_meta)
 
-
 # Crear el problema del laberinto
 problema = Laberinto(matriz_lab)
 
@@ -221,3 +222,143 @@ print(f"Acciones posibles desde el inicio: {acciones_posibles}")
 es_meta = problema.goalTest(problema.inicio)
 print(f"¿Hemos llegado a la meta? {es_meta}")
 
+# ======================================================================
+# Task 1.3 - Graph-Search
+# ======================================================================
+
+# ----------------------------------------------------------------------
+# GRAPH-SEARCH
+# Función genérica para realizar una búsqueda en un problema
+# ----------------------------------------------------------------------
+def graphSearch(problema, estrategia="BFS"):
+    """
+    Params:
+    - problema: Instancia de la clase Problema.
+    - estrategia: El tipo de búsqueda ('BFS', 'DFS', 'A*').
+
+    Return:
+    - Un camino hacia la meta si se encuentra, de lo contrario, None.
+    """
+    # Estado inicial
+    estado_inicial = problema.inicio
+    meta = problema.meta
+
+    # Inicializar las estructuras de datos según la estrategia
+    if estrategia == "BFS":
+        frontera = deque([estado_inicial])  # FIFO (BFS)
+        visitados = set()
+    elif estrategia == "DFS":
+        frontera = [estado_inicial]  # LIFO (DFS)
+        visitados = set()
+    elif estrategia == "A*":
+        frontera = []  # Cola de prioridad (A*)
+        # Asegurarse de que estamos agregando las tuplas de coordenadas con el costo y heurística
+        heapq.heappush(frontera, (0 + problema.h(estado_inicial), estado_inicial))  # (costo + heurística, estado)
+        visitados = set()
+    else:
+        raise ValueError(f"Estrategia '{estrategia}' no reconocida.")
+
+    # Diccionario para seguir el camino
+    padre = {estado_inicial: None}
+
+    while frontera:
+        if estrategia == "BFS":
+            estado_actual = frontera.popleft()  # Explorar el primero (BFS)
+        elif estrategia == "DFS":
+            estado_actual = frontera.pop()  # Explorar el último (DFS)
+        elif estrategia == "A*":
+            _, estado_actual = heapq.heappop(frontera)  # Explorar el de menor costo estimado
+
+        # Verificar si se llegó a la meta
+        if problema.goalTest(estado_actual):
+            # Reconstruir el camino hacia la meta
+            camino = []
+            while estado_actual is not None:
+                camino.append(estado_actual)
+                estado_actual = padre[estado_actual]
+            return camino[::-1]  # Invertir el camino para obtener la secuencia de inicio a meta
+
+        # Marcar como visitado
+        visitados.add(estado_actual)
+
+        # Explorar los vecinos
+        for accion in problema.actions(estado_actual):
+            nuevo_estado = apply_action(estado_actual, accion)  # Función auxiliar para aplicar la acción
+            if nuevo_estado not in visitados:
+                # Para A*, añadir el costo + heurística
+                if estrategia == "A*":
+                    costo = problema.stepCost(estado_actual, accion, nuevo_estado)
+                    heuristica = problema.h(nuevo_estado)
+                    heapq.heappush(frontera, (costo + heuristica, nuevo_estado))
+
+                # Para BFS y DFS, añadir el estado a la frontera
+                if estrategia != "A*":
+                    frontera.append(nuevo_estado)
+
+                # Agregar el estado al diccionario de padres
+                padre[nuevo_estado] = estado_actual
+
+    return None  # Si no se encuentra un camino
+
+
+# ----------------------------------------------------------------------
+# APPLY_ACTION
+# Función auxiliar para aplicar la acción sobre el estado
+# ----------------------------------------------------------------------
+def apply_action(estado, accion):
+    # Aplicar las acciones dependiendo de cómo se represente el estado, 
+    # en el caso de un laberinto representado por coordenadas (x, y), 
+    # las acciones son:
+    x, y = estado
+    if accion == "arriba":
+        return (x - 1, y)
+    elif accion == "abajo":
+        return (x + 1, y)
+    elif accion == "izquierda":
+        return (x, y - 1)
+    elif accion == "derecha":
+        return (x, y + 1)
+    return estado
+
+# ----------------------------------------------------------------------
+# DISTANCIA_MANHATTAN
+# Calcula la distancia de Manhattan entre el estado actual y la meta
+# ----------------------------------------------------------------------
+def distancia_manhattan(estado, meta):
+    x1, y1 = estado
+    x2, y2 = meta
+    return abs(x1 - x2) + abs(y1 - y2)
+
+# ----------------------------------------------------------------------
+# DISTANCIA_EUCLIDIANA
+# Calcula la distancia Euclidiana entre el estado actual y la meta
+# ----------------------------------------------------------------------
+def distancia_euclidiana(estado, meta):
+    x1, y1 = estado
+    x2, y2 = meta
+    return ((x1 - x2) ** 2 + (y1 - y2) ** 2) ** 0.5
+
+
+
+
+
+
+# Crear el problema del laberinto
+matriz_lab = [
+    [3, 0, 0, 1, 0, 0],
+    [0, 1, 0, 1, 0, 0],
+    [0, 1, 0, 0, 0, 0],
+    [0, 0, 0, 1, 2, 0]
+]
+
+# Crear la instancia del laberinto
+problema = Laberinto(matriz_lab)
+
+# Realizar una búsqueda BFS
+camino_bfs = graphSearch(problema, estrategia="BFS")
+print(f"Camino BFS: {camino_bfs}")
+
+# Realizar una búsqueda A* con la heurística de Manhattan
+problema.h = lambda estado: distancia_manhattan(estado, problema.meta)
+camino_a_star = graphSearch(problema, estrategia="A*")
+print(f"Camino A* (Manhattan): {camino_a_star}")
