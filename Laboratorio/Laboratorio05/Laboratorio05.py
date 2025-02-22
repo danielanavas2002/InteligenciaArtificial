@@ -11,6 +11,7 @@ import numpy as np
 import os
 from tkinter import Tk
 from tkinter.filedialog import askopenfilename
+from abc import ABC, abstractmethod
 
 # ======================================================================
 #
@@ -107,18 +108,116 @@ escala = 10       # Definir escala
 tolerancia = 30   # Definir tolerancia
 matriz_lab = imagen_a_matriz(ruta_imagen, escala, tolerancia)
 
-# Configurar para imprimir toda la matriz
-np.set_printoptions(threshold=np.inf)
-
-# Mostrar la matriz
-print(matriz_lab)
+# np.set_printoptions(threshold=np.inf) # Configurar para imprimir toda la matriz
+# print(matriz_lab) # Mostrar la matriz
 
 # Visualizar la matriz con colores
+"""
 plt.imshow(matriz_lab, cmap="nipy_spectral")
 plt.colorbar()
 plt.title("Matriz del Laberinto")
 plt.show()
-
+"""
 # ======================================================================
 # Task 1.2 - Framework de Problemas
 # ======================================================================
+"""
+Clase Problema
+Interfaz genérica que define las funciones necesarias para resolver un 
+problema de búsqueda. La idea es que esta clase establezca los métodos 
+clave que todos los problemas deben implementa
+"""
+class Problema(ABC):
+    def __init__(self, matriz):
+        self.matriz = matriz
+        self.filas = len(matriz)
+        self.columnas = len(matriz[0])
+        self.inicio = self.encontrar_posicion(3)  # Rojo (3 en Matriz) es Inicio
+        self.meta = self.encontrar_posicion(2)    # Verde (2 en Matriz) es la Meta
+
+    def encontrar_posicion(self, valor):
+        """
+        Encuentra la posición de un valor en la matriz.
+        """
+        for i in range(self.filas):
+            for j in range(self.columnas):
+                if self.matriz[i][j] == valor:
+                    return (i, j)
+        return None
+
+    @abstractmethod
+    def actions(self, estado):
+        pass
+
+    @abstractmethod
+    def stepCost(self, estado, accion, nuevo_estado):
+        pass
+
+    @abstractmethod
+    def goalTest(self, estado):
+        pass
+
+    @abstractmethod
+    def h(self, estado):
+        pass
+
+# --------------------------------------------------------------------------
+"""
+Clase Laberinto
+Subclase de Problema 
+Implementa las funciones necesarias para representar y resolver el problema 
+específico del laberinto. Aquí es donde se define cómo interactuar con la 
+estructura del laberinto y cómo generar las acciones posibles, calcular costos,
+y aplicar las heurísticas.
+"""
+class Laberinto(Problema):
+    def actions(self, estado):
+        """
+        Retorna las acciones posibles desde el estado dado.
+        Las acciones posibles son: mover arriba, abajo, izquierda, derecha.
+        """
+        acciones = []
+        x, y = estado
+        if x > 0 and self.matriz[x - 1][y] != 1:  # No es pared
+            acciones.append('arriba')
+        if x < self.filas - 1 and self.matriz[x + 1][y] != 1:  # No es pared
+            acciones.append('abajo')
+        if y > 0 and self.matriz[x][y - 1] != 1:  # No es pared
+            acciones.append('izquierda')
+        if y < self.columnas - 1 and self.matriz[x][y + 1] != 1:  # No es pared
+            acciones.append('derecha')
+        return acciones
+
+    def stepCost(self, estado, accion, nuevo_estado):
+        """
+        Devuelve el costo de tomar una acción desde el estado dado.
+        Se *asume* que todas las acciones tienen un costo de 1.
+        """
+        return 1
+
+    def goalTest(self, estado):
+        """
+        Verifica si el estado actual es la meta.
+        """
+        return estado == self.meta
+
+    def h(self, estado):
+        """
+        Función heurística: distancia de Manhattan desde el estado actual hasta la meta.
+        """
+        x, y = estado
+        x_meta, y_meta = self.meta
+        return abs(x - x_meta) + abs(y - y_meta)
+
+
+# Crear el problema del laberinto
+problema = Laberinto(matriz_lab)
+
+# Obtener acciones posibles desde el estado de inicio
+acciones_posibles = problema.actions(problema.inicio)
+print(f"Acciones posibles desde el inicio: {acciones_posibles}")
+
+# Verificar si hemos alcanzado la meta
+es_meta = problema.goalTest(problema.inicio)
+print(f"¿Hemos llegado a la meta? {es_meta}")
+
