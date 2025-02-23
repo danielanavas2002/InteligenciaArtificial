@@ -331,6 +331,8 @@ def apply_action(estado, accion):
 # ----------------------------------------------------------------------
 # DISTANCIA_MANHATTAN
 # Calcula la distancia de Manhattan entre el estado actual y la meta
+# Justificación: Es ideal para laberintos con movimientos ortogonales 
+# porque nunca sobreestima el costo real y garantiza caminos óptimos.
 # ----------------------------------------------------------------------
 def distancia_manhattan(estado, meta):
     x1, y1 = estado
@@ -340,6 +342,8 @@ def distancia_manhattan(estado, meta):
 # ----------------------------------------------------------------------
 # DISTANCIA_EUCLIDIANA
 # Calcula la distancia Euclidiana entre el estado actual y la meta
+# Justificación: Funciona mejor en espacios con movimientos diagonales 
+# al estimar la distancia en línea recta, asegurando una búsqueda más eficiente.
 # ----------------------------------------------------------------------
 def distancia_euclidiana(estado, meta):
     x1, y1 = estado
