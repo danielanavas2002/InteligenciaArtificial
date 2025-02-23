@@ -352,18 +352,18 @@ def distancia_euclidiana(estado, meta):
 
 problema = Laberinto(matriz_lab) # Crear la instancia del laberinto
 
-# print("Calculando camino BFS...")
+print("Calculando camino BFS...")
 camino_bfs = graphSearch(problema, estrategia="BFS") # Realizar una búsqueda BFS
-# print(f"Camino BFS: {camino_bfs}")
+print(f"Camino BFS: {camino_bfs}")
 
-# print("Calculando camino DFS...")
+print("Calculando camino DFS...")
 camino_dfs = graphSearch(problema, estrategia="DFS") # Realizar una búsqueda DFS
-# print(f"Camino DFS: {camino_dfs}")
+print(f"Camino DFS: {camino_dfs}")
 
-# print("Calculando camino A*...")
+print("Calculando camino A*...")
 problema.h = lambda estado: distancia_manhattan(estado, problema.meta) # Realizar una búsqueda A* con la heurística de Manhattan
 camino_a_star = graphSearch(problema, estrategia="A*")
-# print(f"Camino A* (Manhattan): {camino_a_star}")
+print(f"Camino A* (Manhattan): {camino_a_star}")
 
 # ======================================================================
 # Task 1.4 - Construcción de Salida
