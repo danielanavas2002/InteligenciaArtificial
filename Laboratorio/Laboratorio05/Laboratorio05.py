@@ -7,6 +7,7 @@
 # ----------------------------------------------------------------------
 from PIL import Image
 import matplotlib.pyplot as plt
+from matplotlib.colors import ListedColormap
 import numpy as np
 import os
 from tkinter import Tk
@@ -24,7 +25,6 @@ import heapq
 # ======================================================================
 # Task 1.1 - Discretización de la imagen
 # ======================================================================
-
 # ----------------------------------------------------------------------
 # FUNCIÓN PARA DEFINIR COLOR
 # Los colores en la imagen (especialmente aquellos que no son blanco 
@@ -90,12 +90,12 @@ def imagen_a_matriz(ruta_imagen, factor_escala, tolerancia):
 
     return matriz # Devuelve la matriz resultante
 
+# IMAGEN CON RUTA DEL DIRECTORIO (Solo se uso para pruebas iniciales)
 # Para evitar errores se obtiene la ruta del directorio donde está guardado el script
 # directorio_actual = os.path.dirname(os.path.abspath(__file__))
 # ruta_imagen = os.path.join(directorio_actual, "PruebaLab1.bmp") # Concatenar con la ruta de la imagen
 
-# ABRIR IMAGEN DESDE EL EXPLORADOR DE ARCHIVOS 
-
+# ABRIR IMAGEN DESDE EL EXPLORADOR DE ARCHIVOS ----------------------------------------------------------
 Tk().withdraw() # Evitar que se abra una ventana vacía de tkinter
 ruta_imagen = askopenfilename(title="Seleccionar imagen", filetypes=[("Archivos de imagen", "*.bmp;*.png")]) # Abrir el cuadro de diálogo para seleccionar la imagen
 
@@ -110,16 +110,17 @@ escala = 10       # Definir escala
 tolerancia = 30   # Definir tolerancia
 matriz_lab = imagen_a_matriz(ruta_imagen, escala, tolerancia)
 
+# Visualizar Matriz (Solo para pruebas)
 # np.set_printoptions(threshold=np.inf) # Configurar para imprimir toda la matriz
 # print(matriz_lab) # Mostrar la matriz
 
-# Visualizar la matriz con colores
-"""
-plt.imshow(matriz_lab, cmap="nipy_spectral")
-plt.colorbar()
+# Mostrar Matriz extraída de la imagen
+colors = ['white', 'black', 'green', 'red'] 
+cmap_1 = ListedColormap(colors)
+plt.imshow(matriz_lab, cmap=cmap_1)
 plt.title("Matriz del Laberinto")
 plt.show()
-"""
+
 # ======================================================================
 # Task 1.2 - Framework de Problemas
 # ======================================================================
@@ -147,6 +148,7 @@ class Problema(ABC):
                     return (i, j)
         return None
 
+    # Definir métodos que deben ser implementados:
     @abstractmethod
     def actions(self, estado):
         pass
@@ -163,7 +165,6 @@ class Problema(ABC):
     def h(self, estado):
         pass
 
-# --------------------------------------------------------------------------
 """
 Clase Laberinto
 Subclase de Problema 
@@ -175,8 +176,9 @@ y aplicar las heurísticas.
 class Laberinto(Problema):
     def actions(self, estado):
         """
-        Retorna las acciones posibles desde el estado dado.
-        Las acciones posibles son: mover arriba, abajo, izquierda, derecha.
+        Return:
+         - Acciones posibles desde el estado dado.
+            Las acciones posibles son: mover arriba, abajo, izquierda, derecha.
         """
         acciones = []
         x, y = estado
@@ -192,40 +194,36 @@ class Laberinto(Problema):
 
     def stepCost(self, estado, accion, nuevo_estado):
         """
-        Devuelve el costo de tomar una acción desde el estado dado.
-        Se *asume* que todas las acciones tienen un costo de 1.
+        Return:
+        Costo de tomar una acción desde el estado dado.
+        Se *asume* que todas las acciones tienen un costo de 1
         """
         return 1
 
     def goalTest(self, estado):
         """
-        Verifica si el estado actual es la meta.
+        Verifica si el estado actual es la meta
         """
         return estado == self.meta
 
     def h(self, estado):
         """
-        Función heurística: distancia de Manhattan desde el estado actual hasta la meta.
+        Función heurística: distancia de Manhattan desde el estado actual hasta la meta
         """
         x, y = estado
         x_meta, y_meta = self.meta
         return abs(x - x_meta) + abs(y - y_meta)
 
-# Crear el problema del laberinto
-problema = Laberinto(matriz_lab)
-
-# Obtener acciones posibles desde el estado de inicio
-acciones_posibles = problema.actions(problema.inicio)
-print(f"Acciones posibles desde el inicio: {acciones_posibles}")
-
-# Verificar si hemos alcanzado la meta
-es_meta = problema.goalTest(problema.inicio)
-print(f"¿Hemos llegado a la meta? {es_meta}")
+# Para pruebas: 
+# problema = Laberinto(matriz_lab) # Crear el problema del laberinto
+# acciones_posibles = problema.actions(problema.inicio) # Obtener acciones posibles desde el estado de inicio
+# print(f"Acciones posibles desde el inicio: {acciones_posibles}")
+# es_meta = problema.goalTest(problema.inicio) # Verificar si hemos alcanzado la meta
+# print(f"¿Hemos llegado a la meta? {es_meta}")
 
 # ======================================================================
 # Task 1.3 - Graph-Search
 # ======================================================================
-
 # ----------------------------------------------------------------------
 # GRAPH-SEARCH
 # Función genérica para realizar una búsqueda en un problema
@@ -245,15 +243,14 @@ def graphSearch(problema, estrategia="BFS"):
 
     # Inicializar las estructuras de datos según la estrategia
     if estrategia == "BFS":
-        frontera = deque([estado_inicial])  # FIFO (BFS)
+        frontera = deque([estado_inicial])             # FIFO (BFS)
         visitados = set()
     elif estrategia == "DFS":
-        frontera = [estado_inicial]  # LIFO (DFS)
+        frontera = [estado_inicial]                    # LIFO (DFS)
         visitados = set()
     elif estrategia == "A*":
-        frontera = []  # Cola de prioridad (A*)
-        # Asegurarse de que estamos agregando las tuplas de coordenadas con el costo y heurística
-        heapq.heappush(frontera, (0 + problema.h(estado_inicial), estado_inicial))  # (costo + heurística, estado)
+        frontera = []                                  # Cola de prioridad (A*)
+        heapq.heappush(frontera, (0, estado_inicial))  # (costo + heurística, estado)
         visitados = set()
     else:
         raise ValueError(f"Estrategia '{estrategia}' no reconocida.")
@@ -263,13 +260,13 @@ def graphSearch(problema, estrategia="BFS"):
 
     while frontera:
         if estrategia == "BFS":
-            estado_actual = frontera.popleft()  # Explorar el primero (BFS)
+            estado_actual = frontera.popleft()          # Explorar el primero (BFS)
         elif estrategia == "DFS":
-            estado_actual = frontera.pop()  # Explorar el último (DFS)
+            estado_actual = frontera.pop()              # Explorar el último (DFS)
         elif estrategia == "A*":
             _, estado_actual = heapq.heappop(frontera)  # Explorar el de menor costo estimado
 
-        # Verificar si se llegó a la meta
+        # Verificar si se llego a la meta
         if problema.goalTest(estado_actual):
             # Reconstruir el camino hacia la meta
             camino = []
@@ -299,7 +296,6 @@ def graphSearch(problema, estrategia="BFS"):
                 padre[nuevo_estado] = estado_actual
 
     return None  # Si no se encuentra un camino
-
 
 # ----------------------------------------------------------------------
 # APPLY_ACTION
@@ -338,12 +334,9 @@ def distancia_euclidiana(estado, meta):
     x2, y2 = meta
     return ((x1 - x2) ** 2 + (y1 - y2) ** 2) ** 0.5
 
-
-
-
-
-
+# Para pruebas:
 # Crear el problema del laberinto
+
 matriz_lab = [
     [3, 0, 0, 1, 0, 0],
     [0, 1, 0, 1, 0, 0],
@@ -351,14 +344,67 @@ matriz_lab = [
     [0, 0, 0, 1, 2, 0]
 ]
 
-# Crear la instancia del laberinto
-problema = Laberinto(matriz_lab)
+problema = Laberinto(matriz_lab) # Crear la instancia del laberinto
 
-# Realizar una búsqueda BFS
-camino_bfs = graphSearch(problema, estrategia="BFS")
+print("Calculando camino BFS...")
+camino_bfs = graphSearch(problema, estrategia="BFS") # Realizar una búsqueda BFS
 print(f"Camino BFS: {camino_bfs}")
+print("-----------------------------------------------------------------------------------------")
 
-# Realizar una búsqueda A* con la heurística de Manhattan
-problema.h = lambda estado: distancia_manhattan(estado, problema.meta)
+print("Calculando camino DFS...")
+camino_dfs = graphSearch(problema, estrategia="DFS")
+print(f"Camino DFS: {camino_dfs}")
+print("-----------------------------------------------------------------------------------------")
+
+print("Calculando camino A*...")
+problema.h = lambda estado: distancia_manhattan(estado, problema.meta) # Realizar una búsqueda A* con la heurística de Manhattan
 camino_a_star = graphSearch(problema, estrategia="A*")
 print(f"Camino A* (Manhattan): {camino_a_star}")
+print("-----------------------------------------------------------------------------------------")
+
+# ======================================================================
+# Task 1.4 - Construcción de Salida
+# ======================================================================
+# ----------------------------------------------------------------------
+# GRAFICAR_CAMINO
+# Muestra la matriz del laberinto (extraido previamente) con el camino 
+# resaltado en color rosado
+# ----------------------------------------------------------------------
+def graficar_camino(matriz, camino, tittle):
+    """
+    Param:
+        matriz (numpy.ndarray): La matriz representando el laberinto.
+        camino (list): Una lista de tuplas (x, y) representando el camino encontrado.
+    """
+    # Asegurarse de que la matriz sea un ndarray
+    matriz_camino = np.array(matriz)  # Convertir la matriz a numpy.ndarray
+    
+    # Marcar el camino con un valor de 4 (rosado)
+    for (x, y) in camino:
+        matriz_camino[x, y] = 4
+
+    # Definir el colormap personalizado
+    colores = ['white', 'black', 'green', 'red', 'magenta']  # Blanco, negro, verde, rojo, magenta
+    cmap = ListedColormap(colores)
+
+    # Mostrar la matriz con el camino resaltado
+    plt.imshow(matriz_camino, cmap=cmap, interpolation="nearest")
+    plt.title(tittle)
+    plt.xticks([])  # Elimina los valores del eje x
+    plt.yticks([])  # Elimina los valores del eje y
+    plt.show()
+
+# Con BFS 
+if camino_bfs:
+    tittle = "Laberito Resuelto | BFS"
+    graficar_camino(matriz_lab, camino_bfs, tittle)
+
+# Con BFS 
+if camino_dfs:
+    tittle = "Laberito Resuelto | DFS"
+    graficar_camino(matriz_lab, camino_dfs, tittle)
+
+# A*
+if camino_a_star:
+    tittle = "Laberito Resuelto | A*"
+    graficar_camino(matriz_lab, camino_a_star, tittle)
