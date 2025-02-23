@@ -113,11 +113,23 @@ matriz_lab = imagen_a_matriz(ruta_imagen, escala, tolerancia)
 # Visualizar Matriz (Solo para pruebas)
 # np.set_printoptions(threshold=np.inf) # Configurar para imprimir toda la matriz
 # print(matriz_lab) # Mostrar la matriz
-
+"""
+# Para pruebas:
+matriz_lab = [
+    [3, 0, 0, 1, 0, 0],
+    [0, 1, 0, 1, 0, 0],
+    [0, 1, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 1, 2, 0]
+]
+"""
 # Mostrar Matriz extraída de la imagen
 colors = ['white', 'black', 'green', 'red'] 
 cmap_1 = ListedColormap(colors)
 plt.imshow(matriz_lab, cmap=cmap_1)
+plt.xticks([])  # Elimina los valores del eje x
+plt.yticks([])  # Elimina los valores del eje y
 plt.title("Matriz del Laberinto")
 plt.show()
 
@@ -334,33 +346,20 @@ def distancia_euclidiana(estado, meta):
     x2, y2 = meta
     return ((x1 - x2) ** 2 + (y1 - y2) ** 2) ** 0.5
 
-# Para pruebas:
-# Crear el problema del laberinto
-
-matriz_lab = [
-    [3, 0, 0, 1, 0, 0],
-    [0, 1, 0, 1, 0, 0],
-    [0, 1, 0, 0, 0, 0],
-    [0, 0, 0, 1, 2, 0]
-]
-
 problema = Laberinto(matriz_lab) # Crear la instancia del laberinto
 
-print("Calculando camino BFS...")
+# print("Calculando camino BFS...")
 camino_bfs = graphSearch(problema, estrategia="BFS") # Realizar una búsqueda BFS
-print(f"Camino BFS: {camino_bfs}")
-print("-----------------------------------------------------------------------------------------")
+# print(f"Camino BFS: {camino_bfs}")
 
-print("Calculando camino DFS...")
-camino_dfs = graphSearch(problema, estrategia="DFS")
-print(f"Camino DFS: {camino_dfs}")
-print("-----------------------------------------------------------------------------------------")
+# print("Calculando camino DFS...")
+camino_dfs = graphSearch(problema, estrategia="DFS") # Realizar una búsqueda DFS
+# print(f"Camino DFS: {camino_dfs}")
 
-print("Calculando camino A*...")
+# print("Calculando camino A*...")
 problema.h = lambda estado: distancia_manhattan(estado, problema.meta) # Realizar una búsqueda A* con la heurística de Manhattan
 camino_a_star = graphSearch(problema, estrategia="A*")
-print(f"Camino A* (Manhattan): {camino_a_star}")
-print("-----------------------------------------------------------------------------------------")
+# print(f"Camino A* (Manhattan): {camino_a_star}")
 
 # ======================================================================
 # Task 1.4 - Construcción de Salida
@@ -396,15 +395,15 @@ def graficar_camino(matriz, camino, tittle):
 
 # Con BFS 
 if camino_bfs:
-    tittle = "Laberito Resuelto | BFS"
+    tittle = "Laberinto Resuelto | BFS"
     graficar_camino(matriz_lab, camino_bfs, tittle)
 
 # Con BFS 
 if camino_dfs:
-    tittle = "Laberito Resuelto | DFS"
+    tittle = "Laberinto Resuelto | DFS"
     graficar_camino(matriz_lab, camino_dfs, tittle)
 
 # A*
 if camino_a_star:
-    tittle = "Laberito Resuelto | A*"
+    tittle = "Laberinto Resuelto | A*"
     graficar_camino(matriz_lab, camino_a_star, tittle)
