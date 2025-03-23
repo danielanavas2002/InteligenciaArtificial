@@ -247,7 +247,6 @@ def minimax_alpha_beta(board, depth, alpha, beta, maximizingPlayer):
                 
         return column, value
 
-
 # Parámetros de Q-learning
 alpha = 0.1  # Tasa de aprendizaje
 gamma = 0.9  # Factor de descuento
