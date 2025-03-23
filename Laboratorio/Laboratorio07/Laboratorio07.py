@@ -274,6 +274,9 @@ pygame.display.update()
 
 myfont = pygame.font.SysFont("monospace", 75)
 
+# Seleccionar el modo de juego
+mode = input("Selecciona el modo de juego (1: Humano vs IA, 2: IA vs IA): ")
+
 # Bucle principal del juego
 while not game_over:
 
@@ -281,51 +284,91 @@ while not game_over:
         if event.type == pygame.QUIT:
             sys.exit()
 
-        if event.type == pygame.MOUSEMOTION:
-            pygame.draw.rect(screen, WHITE, (0, 0, width, SQUARESIZE))
-            posx = event.pos[0]
-            if turn == PLAYER:
-                pygame.draw.circle(screen, RED, (posx, int(SQUARESIZE/2)), RADIUS)
-        pygame.display.update()
-
-        if event.type == pygame.MOUSEBUTTONDOWN:
-            pygame.draw.rect(screen, WHITE, (0, 0, width, SQUARESIZE))
-            # Preguntar por la entrada del Jugador 1
-            if turn == PLAYER:
+        if mode == "1":
+            if event.type == pygame.MOUSEMOTION:
+                pygame.draw.rect(screen, WHITE, (0, 0, width, SQUARESIZE))
                 posx = event.pos[0]
-                col = int(posx // SQUARESIZE)
+                if turn == PLAYER:
+                    pygame.draw.circle(screen, RED, (posx, int(SQUARESIZE/2)), RADIUS)
+                pygame.display.update()
+
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                pygame.draw.rect(screen, WHITE, (0, 0, width, SQUARESIZE))
+                # Preguntar por la entrada del Jugador 1
+                if turn == PLAYER:
+                    posx = event.pos[0]
+                    col = int(posx // SQUARESIZE)
+
+                    if is_valid_location(board, col):
+                        row = get_next_open_row(board, col)
+                        drop_piece(board, row, col, PLAYER_PIECE)
+
+                        if winning_move(board, PLAYER_PIECE):
+                            label = myfont.render("Gana Jugador 1", 1, BLACK)
+                            screen.blit(label, (30,10))
+                            game_over = True
+
+                        turn = AI
+                        print_board(board)
+                        draw_board(board)
+
+            # Turno de la IA
+            if turn == AI and not game_over:
+                col, minimax_score = minimax_alpha_beta(board, 5, -math.inf, math.inf, True)
 
                 if is_valid_location(board, col):
+                    pygame.time.wait(500)
+                    row = get_next_open_row(board, col)
+                    drop_piece(board, row, col, AI_PIECE)
+
+                    if winning_move(board, AI_PIECE):
+                        label = myfont.render("Gana Jugador 2", 1, BLACK)
+                        screen.blit(label, (30,10))
+                        game_over = True
+
+                    print_board(board)
+                    draw_board(board)
+
+                    turn = PLAYER
+
+        elif mode == "2":
+            # Turno de la IA sin poda alpha-beta
+            if turn == PLAYER and not game_over:
+                col, minimax_score = minimax(board, 5, True)
+
+                if is_valid_location(board, col):
+                    pygame.time.wait(500)
                     row = get_next_open_row(board, col)
                     drop_piece(board, row, col, PLAYER_PIECE)
 
                     if winning_move(board, PLAYER_PIECE):
-                        label = myfont.render("Gana Jugador 1", 1, BLACK)
+                        label = myfont.render("Gana IA MM-WOP", 1, WHITE)
                         screen.blit(label, (30,10))
                         game_over = True
 
-                    turn = AI
                     print_board(board)
                     draw_board(board)
 
-    # Turno de la IA
-    if turn == AI and not game_over:
-        col, minimax_score = minimax_alpha_beta(board, 5, -math.inf, math.inf, True)
+                    turn = AI
 
-        if is_valid_location(board, col):
-            pygame.time.wait(500)
-            row = get_next_open_row(board, col)
-            drop_piece(board, row, col, AI_PIECE)
+            # Turno de la IA con poda alpha-beta
+            if turn == AI and not game_over:
+                col, minimax_score = minimax_alpha_beta(board, 5, -math.inf, math.inf, True)
 
-            if winning_move(board, AI_PIECE):
-                label = myfont.render("Gana Jugador 2", 1, BLACK)
-                screen.blit(label, (30,10))
-                game_over = True
+                if is_valid_location(board, col):
+                    pygame.time.wait(500)
+                    row = get_next_open_row(board, col)
+                    drop_piece(board, row, col, AI_PIECE)
 
-            print_board(board)
-            draw_board(board)
+                    if winning_move(board, AI_PIECE):
+                        label = myfont.render("Gana IA MM-WP", 1, WHITE)
+                        screen.blit(label, (30,10))
+                        game_over = True
 
-            turn = PLAYER
+                    print_board(board)
+                    draw_board(board)
+
+                    turn = PLAYER
 
     if game_over:
         pygame.time.wait(3000)
