@@ -3,6 +3,7 @@ import pygame
 import sys
 import math
 import random
+import tkinter as tk
 
 # Inicializar Pygame
 pygame.init()
@@ -274,8 +275,25 @@ pygame.display.update()
 
 myfont = pygame.font.SysFont("monospace", 75)
 
-# Seleccionar el modo de juego
-mode = input("Selecciona el modo de juego (1: Humano vs IA, 2: IA vs IA): ")
+# Función para manejar la selección del modo de juego
+def select_mode(mode_selected):
+    global mode
+    mode = mode_selected
+    root.destroy()
+
+# Inicializar el popup para seleccionar el modo de juego
+root = tk.Tk()
+root.title("Seleccionar Modo de Juego")
+
+# Crear botones para seleccionar el modo de juego
+button1 = tk.Button(root, text="Humano vs IA", command=lambda: select_mode("1"))
+button1.pack(pady=10)
+
+button2 = tk.Button(root, text="IA vs IA", command=lambda: select_mode("2"))
+button2.pack(pady=10)
+
+# Ejecutar el popup
+root.mainloop()
 
 # Bucle principal del juego
 while not game_over:
