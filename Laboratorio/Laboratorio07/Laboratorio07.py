@@ -247,6 +247,7 @@ def minimax_alpha_beta(board, depth, alpha, beta, maximizingPlayer):
                 
         return column, value
 
+
 # Parámetros de Q-learning
 alpha = 0.1  # Tasa de aprendizaje
 gamma = 0.9  # Factor de descuento
@@ -321,6 +322,44 @@ def td_learning_vs_minimax(board, depth):
         row = get_next_open_row(board, col)
         drop_piece(board, row, col, AI_PIECE)
 
+
+def td_learning_vs_td_learning(board, depth):
+    state = get_state(board)
+    valid_locations = get_valid_locations(board)
+    action = choose_action(state, valid_locations)
+    row = get_next_open_row(board, action)
+    drop_piece(board, row, action, PLAYER_PIECE)
+
+    if winning_move(board, PLAYER_PIECE):
+        reward = 1
+    elif is_terminal_node(board):
+        reward = 0
+    else:
+        reward = -0.1
+
+    next_state = get_state(board)
+    next_action = choose_action(next_state, get_valid_locations(board))
+    update_q(state, action, reward, next_state, next_action)
+
+    if not is_terminal_node(board):
+        state = get_state(board)
+        valid_locations = get_valid_locations(board)
+        action = choose_action(state, valid_locations)
+        row = get_next_open_row(board, action)
+        drop_piece(board, row, action, AI_PIECE)
+
+        if winning_move(board, AI_PIECE):
+            reward = 1
+        elif is_terminal_node(board):
+            reward = 0
+        else:
+            reward = -0.1
+
+        next_state = get_state(board)
+        next_action = choose_action(next_state, get_valid_locations(board))
+        update_q(state, action, reward, next_state, next_action)
+
+
 # Dibujar el tablero del juego en la pantalla
 def draw_board(board):
     for c in range(COLUMN_COUNT):
@@ -358,7 +397,7 @@ def select_mode(mode_selected):
 # Inicializar el popup para seleccionar el modo de juego
 root = tk.Tk()
 root.title("Seleccionar Modo de Juego")
-root.geometry("350x225")  # Cambia las dimensiones según tus preferencias
+root.geometry("350x250")  # Cambia las dimensiones según tus preferencias
 
 # Crear botones para seleccionar el modo de juego
 button1 = tk.Button(root, text="Humano vs MM W Pruning", command=lambda: select_mode("1"))
@@ -367,11 +406,14 @@ button1.pack(pady=10)
 button2 = tk.Button(root, text="MM WO PAB vs MM W PAB", command=lambda: select_mode("2"))
 button2.pack(pady=10)
 
-button3 = tk.Button(root, text="TD Learning vs MM W PAB", command=lambda: select_mode("3"))
+button3 = tk.Button(root, text="TD Learning vs TD Learning", command=lambda: select_mode("3"))
 button3.pack(pady=10)
 
-button4 = tk.Button(root, text="TD Learning vs MM WO PAB", command=lambda: select_mode("4"))
+button4 = tk.Button(root, text="TD Learning vs MM W PAB", command=lambda: select_mode("4"))
 button4.pack(pady=10)
+
+button5 = tk.Button(root, text="TD Learning vs MM WO PAB", command=lambda: select_mode("5"))
+button5.pack(pady=10)
 
 # Ejecutar el popup
 root.mainloop()
@@ -468,8 +510,61 @@ while not game_over:
                     draw_board(board)
 
                     turn = PLAYER
-                    
+        
         elif mode == "3":
+            if turn == PLAYER and not game_over:
+                td_learning_vs_td_learning(board, 5)
+                print_board(board)
+                draw_board(board)
+
+                if winning_move(board, PLAYER_PIECE):
+                    pygame.draw.rect(screen, BLACK, (0, 0, width, SQUARESIZE))
+                    label = myfont.render("Gana TDL 1", 1, WHITE)
+                    screen.blit(label, (20, 10))
+                    pygame.display.update()
+                    game_over = True
+                elif winning_move(board, AI_PIECE):
+                    pygame.draw.rect(screen, BLACK, (0, 0, width, SQUARESIZE))
+                    label = myfont.render("Gana TDL 2", 1, WHITE)
+                    screen.blit(label, (30, 10))
+                    pygame.display.update()
+                    game_over = True
+                elif is_terminal_node(board):
+                    pygame.draw.rect(screen, BLACK, (0, 0, width, SQUARESIZE))
+                    label = myfont.render("¡Empate!", 1, WHITE)
+                    screen.blit(label, (30, 10))
+                    pygame.display.update()
+                    game_over = True
+
+                turn = AI
+
+            elif turn == AI and not game_over:
+                td_learning_vs_td_learning(board, 5)
+                print_board(board)
+                draw_board(board)
+
+                if winning_move(board, AI_PIECE):
+                    pygame.draw.rect(screen, BLACK, (0, 0, width, SQUARESIZE))
+                    label = myfont.render("Gana TDL 2", 1, WHITE)
+                    screen.blit(label, (30, 10))
+                    pygame.display.update()
+                    game_over = True
+                elif winning_move(board, PLAYER_PIECE):
+                    pygame.draw.rect(screen, BLACK, (0, 0, width, SQUARESIZE))
+                    label = myfont.render("Gana TDL 1", 1, WHITE)
+                    screen.blit(label, (20, 10))
+                    pygame.display.update()
+                    game_over = True
+                elif is_terminal_node(board):
+                    pygame.draw.rect(screen, BLACK, (0, 0, width, SQUARESIZE))
+                    label = myfont.render("¡Empate!", 1, WHITE)
+                    screen.blit(label, (30, 10))
+                    pygame.display.update()
+                    game_over = True
+
+                turn = PLAYER
+                    
+        elif mode == "4":
             if turn == PLAYER and not game_over:
                 td_learning_vs_minimax_alpha_beta(board, 5)
                 print_board(board)
@@ -516,7 +611,7 @@ while not game_over:
 
                 turn = PLAYER
 
-        elif mode == "4":
+        elif mode == "5":
             if turn == PLAYER and not game_over:
                 td_learning_vs_minimax(board, 5)
                 print_board(board)
