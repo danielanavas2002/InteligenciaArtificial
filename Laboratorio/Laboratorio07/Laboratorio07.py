@@ -4,6 +4,7 @@ import sys
 import math
 import random
 import tkinter as tk
+import matplotlib.pyplot as plt
 
 # Inicializar Pygame
 pygame.init()
@@ -259,7 +260,7 @@ Q = {}
 # Función para obtener el estado como una cadena
 def get_state(board):
     return str(board)
-
+'''
 # Función para elegir una acción usando épsilon-greedy
 def choose_action(state, valid_locations):
     if random.uniform(0, 1) < epsilon:
@@ -268,61 +269,34 @@ def choose_action(state, valid_locations):
         q_values = [Q.get((state, a), 0) for a in valid_locations]
         max_q = max(q_values)
         return valid_locations[q_values.index(max_q)]
+'''
 
+def choose_action(state, valid_locations):
+    if not valid_locations:
+        return None  # Evita que el código intente elegir una acción inválida
+
+    q_values = [Q.get((state, a), 0) for a in valid_locations]
+    
+    if not q_values:  # Si la lista está vacía, elegir una acción aleatoria
+        return random.choice(valid_locations)
+
+    max_q = max(q_values)
+    return valid_locations[q_values.index(max_q)]
+
+'''
 # Función para actualizar la tabla Q
 def update_q(state, action, reward, next_state, next_action):
     q_value = Q.get((state, action), 0)
     next_q_value = Q.get((next_state, next_action), 0)
     Q[(state, action)] = q_value + alpha * (reward + gamma * next_q_value - q_value)
+'''
 
-def td_learning_vs_minimax_alpha_beta(board, depth):
-    state = get_state(board)
-    valid_locations = get_valid_locations(board)
-    action = choose_action(state, valid_locations)
-    row = get_next_open_row(board, action)
-    drop_piece(board, row, action, PLAYER_PIECE)
+def update_q(state, action, reward, next_state, next_action):
+    q_value = Q.get((state, action), 0)
+    next_q_value = Q.get((next_state, next_action), 0) if next_action is not None else 0
+    Q[(state, action)] = q_value + alpha * (reward + gamma * next_q_value - q_value)
 
-    if winning_move(board, PLAYER_PIECE):
-        reward = 1
-    elif is_terminal_node(board):
-        reward = 0
-    else:
-        reward = -0.1
-
-    next_state = get_state(board)
-    next_action = choose_action(next_state, get_valid_locations(board))
-    update_q(state, action, reward, next_state, next_action)
-
-    if not is_terminal_node(board):
-        col, minimax_score = minimax_alpha_beta(board, depth, -math.inf, math.inf, True)
-        row = get_next_open_row(board, col)
-        drop_piece(board, row, col, AI_PIECE)
-
-
-def td_learning_vs_minimax(board, depth):
-    state = get_state(board)
-    valid_locations = get_valid_locations(board)
-    action = choose_action(state, valid_locations)
-    row = get_next_open_row(board, action)
-    drop_piece(board, row, action, PLAYER_PIECE)
-
-    if winning_move(board, PLAYER_PIECE):
-        reward = 1
-    elif is_terminal_node(board):
-        reward = 0
-    else:
-        reward = -0.1
-
-    next_state = get_state(board)
-    next_action = choose_action(next_state, get_valid_locations(board))
-    update_q(state, action, reward, next_state, next_action)
-
-    if not is_terminal_node(board):
-        col, minimax_score = minimax(board, depth, True)
-        row = get_next_open_row(board, col)
-        drop_piece(board, row, col, AI_PIECE)
-
-
+'''
 def td_learning_vs_td_learning(board, depth):
     state = get_state(board)
     valid_locations = get_valid_locations(board)
@@ -358,8 +332,80 @@ def td_learning_vs_td_learning(board, depth):
         next_state = get_state(board)
         next_action = choose_action(next_state, get_valid_locations(board))
         update_q(state, action, reward, next_state, next_action)
+'''
 
+def td_learning_vs_td_learning(board, depth):
+    state = get_state(board)
+    valid_locations = get_valid_locations(board)
+    action = choose_action(state, valid_locations)
 
+    if action is None:
+        # print("Error: No se encontraron acciones válidas")
+        return  # Evita continuar si no hay jugadas posibles
+
+    row = get_next_open_row(board, action)
+    drop_piece(board, row, action, PLAYER_PIECE)
+
+    if winning_move(board, PLAYER_PIECE):
+        reward = 1
+    elif is_terminal_node(board):
+        reward = 0
+    else:
+        reward = -0.1
+
+    next_state = get_state(board)
+    next_action = choose_action(next_state, get_valid_locations(board))
+    update_q(state, action, reward, next_state, next_action)
+
+    # print(f"TD Learning - Estado: {state}, Acción: {action}, Recompensa: {reward}")
+
+        
+def td_learning_vs_minimax(board, depth):
+    state = get_state(board)
+    valid_locations = get_valid_locations(board)
+    action = choose_action(state, valid_locations)
+    row = get_next_open_row(board, action)
+    drop_piece(board, row, action, PLAYER_PIECE)
+
+    if winning_move(board, PLAYER_PIECE):
+        reward = 1
+    elif is_terminal_node(board):
+        reward = 0
+    else:
+        reward = -0.1
+
+    next_state = get_state(board)
+    next_action = choose_action(next_state, get_valid_locations(board))
+    update_q(state, action, reward, next_state, next_action)
+
+    if not is_terminal_node(board):
+        col, minimax_score = minimax(board, depth, True)
+        row = get_next_open_row(board, col)
+        drop_piece(board, row, col, AI_PIECE)
+
+def td_learning_vs_minimax_alpha_beta(board, depth):
+    state = get_state(board)
+    valid_locations = get_valid_locations(board)
+    action = choose_action(state, valid_locations)
+    row = get_next_open_row(board, action)
+    drop_piece(board, row, action, PLAYER_PIECE)
+
+    if winning_move(board, PLAYER_PIECE):
+        reward = 1
+    elif is_terminal_node(board):
+        reward = 0
+    else:
+        reward = -0.1
+
+    next_state = get_state(board)
+    next_action = choose_action(next_state, get_valid_locations(board))
+    update_q(state, action, reward, next_state, next_action)
+
+    if not is_terminal_node(board):
+        col, minimax_score = minimax_alpha_beta(board, depth, -math.inf, math.inf, True)
+        row = get_next_open_row(board, col)
+
+'''
 # Dibujar el tablero del juego en la pantalla
 def draw_board(board):
     for c in range(COLUMN_COUNT):
@@ -660,3 +706,75 @@ while not game_over:
 
     if game_over:
         pygame.time.wait(3000)
+
+'''
+
+
+
+def play_games(agent1, agent2, num_games, depth):
+    results = {"Agent1 Wins": 0, "Agent2 Wins": 0, "Draws": 0}
+
+    for _ in range(num_games):
+        board = create_board()
+        game_over = False
+        turn = random.randint(PLAYER, AI)
+
+        while not game_over:
+            if turn == PLAYER:
+                agent1(board, depth)  # Ejecuta sin esperar retorno
+                if winning_move(board, PLAYER_PIECE):
+                    results["Agent1 Wins"] += 1
+                    game_over = True
+                elif is_terminal_node(board):
+                    results["Draws"] += 1
+                    game_over = True
+                turn = AI
+            else:
+                if agent2 in [minimax, minimax_alpha_beta]:
+                    if agent2 == minimax:
+                        col, _ = agent2(board, depth, True)  # Pasa `True` para maximizar
+                    elif agent2 == minimax_alpha_beta:
+                        col, _ = agent2(board, depth, -math.inf, math.inf, True)  # Pasa alpha-beta
+                elif agent2 == td_learning_vs_td_learning:
+                    agent2(board, depth)  # Solo ejecuta la función, sin esperar retorno
+                    col = None  # Evita errores en el siguiente bloque
+                else:
+                    col, _ = agent2(board, depth)
+
+                if col is not None and is_valid_location(board, col):
+                    row = get_next_open_row(board, col)
+                    drop_piece(board, row, col, AI_PIECE)
+
+                if winning_move(board, AI_PIECE):
+                    results["Agent2 Wins"] += 1
+                    game_over = True
+                elif is_terminal_node(board):
+                    results["Draws"] += 1
+                    game_over = True
+                turn = PLAYER
+
+    return results
+
+games_td_vs_td = play_games(td_learning_vs_td_learning, td_learning_vs_td_learning, 50, 5)
+print("Termina TDL vs TDL")
+games_td_vs_minimax = play_games(td_learning_vs_minimax, minimax, 50, 5)
+print("Termina TDL vs MM WOP")
+games_td_vs_minimax_ab = play_games(td_learning_vs_minimax_alpha_beta, minimax_alpha_beta, 50, 5)
+print("Termina TDL vs MM WP")
+
+def plot_results(results, title, labels):
+    values = list(results.values())
+
+    plt.figure(figsize=(8, 6))
+    plt.bar(labels, values, color=['red', 'yellow', 'gray'])
+    plt.title(title)
+    plt.ylabel("Número de Juegos")
+    plt.show()
+
+# Llamadas con labels personalizados
+plot_results(games_td_vs_td, "TD Learning vs TD Learning", ["TDL 1", "TDL 2", "Empate"])
+plot_results(games_td_vs_minimax, "TD Learning vs Minimax sin Poda Alpha-Beta", ["TDL", "Minimax WOP", "Empate"])
+plot_results(games_td_vs_minimax_ab, "TD Learning vs Minimax con Poda Alpha-Beta", ["TDL", "Minimax WP", "Empate"])
+
+
+
