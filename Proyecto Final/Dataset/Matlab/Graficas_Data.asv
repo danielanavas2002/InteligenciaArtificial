@@ -1,0 +1,188 @@
+% UNIVERSIDAD DEL VALLE DE GUATEMALA
+% Inteligencia Artificial - CC3085
+%
+% Elda Daniela Navas Cinto - 211000
+% Proyecto Final - Elaboración de Gráficas
+
+% Limpiar espacio
+close all; clear; clc;
+
+% Definir parámetros
+Fs = 2000;                % Frecuencia de muestreo (Hz)
+tamano_ventana = 5;       % s 
+N = Fs * tamano_ventana;  % Número de Muetras
+
+% Filtrado Señal
+f_low = 20;  % Frecuencia de corte inferior (20 Hz)
+f_high = 500;  % Frecuencia de corte superior (500 Hz)
+Wn = [f_low f_high] / (Fs / 2);  % Frecuencias normalizadas
+[b, a] = butter(4, Wn, 'bandpass');  % Diseñar el filtro Butterworth pasabanda Orden 4
+
+% Cargar datos (variable 'data')
+reposo = load('Reposo.mat', 'data');
+palma = load('Palma.mat', 'data');
+pinza = load('Pinza.mat', 'data');
+puno = load('Puño.mat', 'data');
+
+% Extraer la variable 'data' de cada estructura
+reposo = reposo.data;
+palma = palma.data;
+pinza = pinza.data;
+puno = puno.data;
+
+% Definir inicio y fin del primer movimiento
+inicio_movimiento = ( Fs * tamano_ventana * 3) + 1;                  
+fin_movimiento = inicio_movimiento + N - 1; 
+
+% Cortar segmentos de interés
+reposo_segmento = filter(b, a, reposo(inicio_movimiento:fin_movimiento));
+palma_segmento = filter(b, a, palma(inicio_movimiento:fin_movimiento));
+pinza_segmento = filter(b, a, pinza(inicio_movimiento:fin_movimiento));
+puno_segmento = filter(b, a, puno(inicio_movimiento:fin_movimiento));
+
+
+% Crear vector de tiempo de 0 a 5 segundos
+t = linspace(0,5,N);
+
+% Graficar Señal
+figure(1);
+
+subplot(2,2,1);
+plot(t, reposo_segmento, 'Color', [0 0.4470 0.7410]); 
+title('Reposo', 'FontSize', 14);
+xlabel('Tiempo (s)');
+ylabel('Amplitud (mV)');
+ylim([-1.2 1.2]);
+
+subplot(2,2,2);
+plot(t, palma_segmento, 'Color', [0.8500 0.3250 0.0980]); 
+title('Palma Extendida', 'FontSize', 14);
+xlabel('Tiempo (s)');
+ylabel('Amplitud (mV)');
+ylim([-1.2 1.2]);
+
+subplot(2,2,3);
+plot(t, pinza_segmento, 'Color', [0.4660 0.6740 0.1880]); 
+title('Pinza', 'FontSize', 14);
+xlabel('Tiempo (s)');
+ylabel('Amplitud (mV)');
+ylim([-1.2 1.2]);
+
+subplot(2,2,4);
+plot(t, puno_segmento, 'Color', [0.4940 0.1840 0.5560]); 
+title('Puño Cerrado', 'FontSize', 14);
+xlabel('Tiempo (s)');
+ylabel('Amplitud (mV)');
+ylim([-1.2 1.2]);
+
+sgtitle('Patrones Musculares', 'FontSize', 28, 'FontWeight', 'bold');
+
+%% TRANSFORMADA DE FOURIER
+f = Fs*(0:(N/2))/N; % Vector de frecuencias positivas
+
+% FFT
+Y_reposo = fft(reposo_segmento);
+Y_palma = fft(palma_segmento);
+Y_pinza = fft(pinza_segmento);
+Y_puno = fft(puno_segmento);
+
+Y_reposo = abs(Y_reposo/N);
+Y_reposo = Y_reposo(1:N/2+1);
+Y_reposo(2:end-1) = 2*Y_reposo(2:end-1);
+
+P2_1 = abs(X1/N); % P1 y P2 para X1
+P1_1 = P2_1(1:N/2+1);
+P1_1(2:end-1) = 2*P1_1(2:end-1);
+
+P2_2 = abs(X2/N); % P1 y P2 para X2
+P1_2 = P2_2(1:N/2+1);
+P1_2(2:end-1) = 2*P1_2(2:end-1);
+
+f = Fs*(0:(N/2))/N; % Obtener la frecuencia 
+
+figure; % Crear Figura 
+
+subplot(2, 1, 1); % Figura para SSAS X1
+stem(f, P1_1);
+title('Espectro de Amplitud Unilateral - x1');
+xlabel('Frecuencia (Hz)');
+ylabel('|P1(f)|');
+
+subplot(2, 1, 2); % Figura para SSAS X2
+stem(f, P1_2);
+title('Espectro de Amplitud Unilateral - x2');
+xlabel('Frecuencia (Hz)');
+ylabel('|P1(f)|');
+
+sgtitle('Figura 6 - Espectro de Amplitud Unilateral'); % Titulo de la Figura
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+% FFT
+Y_reposo = fft(reposo_segmento);
+Y_palma = fft(palma_segmento);
+Y_pinza = fft(pinza_segmento);
+Y_puno = fft(puno_segmento);
+
+% Magnitud normalizada
+P_reposo = abs(Y_reposo/N);
+P_palma = abs(Y_palma/N);
+P_pinza = abs(Y_pinza/N);
+P_puno = abs(Y_puno/N);
+
+% Solo la mitad positiva
+P_reposo = 2*P_reposo(1:N/2+1);
+P_palma = 2*P_palma(1:N/2+1);
+P_pinza = 2*P_pinza(1:N/2+1);
+P_puno = 2*P_puno(1:N/2+1);
+
+% Gráficas con stem
+figure(2);
+
+subplot(2,2,1);
+stem(f, P_reposo, 'Color', [0 0.4470 0.7410]);
+title('Reposo', 'FontSize', 14);
+xlabel('Frecuencia (Hz)');
+ylabel('|P(f)|');
+xlim([0 1000]);
+ylim([0 0.016]);
+
+subplot(2,2,2);
+stem(f, P_palma, 'Color', [0.8500 0.3250 0.0980]);
+title('Palma Extendida', 'FontSize', 14);
+xlabel('Frecuencia (Hz)');
+ylabel('|P(f)|');
+xlim([0 1000]);
+ylim([0 0.016]);
+
+subplot(2,2,3);
+stem(f, P_pinza, 'Color', [0.4660 0.6740 0.1880]);
+title('Pinza', 'FontSize', 14);
+xlabel('Frecuencia (Hz)');
+ylabel('|P(f)|');
+xlim([0 1000]);
+ylim([0 0.016]);
+
+subplot(2,2,4);
+stem(f, P_puno, 'Color', [0.4940 0.1840 0.5560]);
+title('Puño Cerrado', 'FontSize', 14);
+xlabel('Frecuencia (Hz)');
+ylabel('|P(f)|');
+xlim([0 1000]);
+ylim([0 0.016]);
+
+sgtitle('Espectro de la Señal', 'FontSize', 28, 'FontWeight', 'bold');
+
