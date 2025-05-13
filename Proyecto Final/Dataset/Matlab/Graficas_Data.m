@@ -34,12 +34,11 @@ puno = puno.data;
 inicio_movimiento = ( Fs * tamano_ventana * 3) + 1;                  
 fin_movimiento = inicio_movimiento + N - 1; 
 
-% Cortar segmentos de interés
+% Cortar y filtrar segmentos de interés
 reposo_segmento = filter(b, a, reposo(inicio_movimiento:fin_movimiento));
 palma_segmento = filter(b, a, palma(inicio_movimiento:fin_movimiento));
 pinza_segmento = filter(b, a, pinza(inicio_movimiento:fin_movimiento));
 puno_segmento = filter(b, a, puno(inicio_movimiento:fin_movimiento));
-
 
 % Crear vector de tiempo de 0 a 5 segundos
 t = linspace(0,5,N);
@@ -137,4 +136,5 @@ xlim([0 1000]);
 ylim([0 0.016]);
 
 sgtitle('Espectro Unilateral de la Señal', 'FontSize', 28, 'FontWeight', 'bold');
+
 

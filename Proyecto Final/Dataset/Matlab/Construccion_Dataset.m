@@ -11,7 +11,7 @@ close all; clear; clc;
 Fs = 2000;                % Frecuencia de muestreo (Hz)
 tamano_ventana = 5;       % s 
 N = Fs * tamano_ventana;  % Número de Muetras
-f = Fs*(0:(N/2))/N;                      % Vector de frecuencias
+f = Fs*(0:(N/2))/N;       % Vector de frecuencias
 
 % Filtrado Señal
 f_low = 20;  % Frecuencia de corte inferior (20 Hz)
@@ -30,7 +30,6 @@ reposo = filter(b, a, reposo.data);
 palma = filter(b, a, palma.data);
 pinza = filter(b, a, pinza.data);
 puno = filter(b, a, puno.data);
-puno = puno*2;
 
 %% DATASET REPOSO
 % Inicializar dataset para Reposo
