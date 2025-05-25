@@ -37,7 +37,7 @@ dataset_reposo = [];
 
 num_ventanas_rep = floor(length(reposo) / N); % Número de ventanas 
 
-% Recorrer cada 2 ventanas para extraer características
+% Recorrer cada ventana para extraer características
 for i = 1:num_ventanas_rep
     ventana = reposo((i-1)*N+1:i*N); % Extraer la ventana de 5 segundos
     
